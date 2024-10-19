@@ -1,0 +1,59 @@
+@mixin pc($breakpoint: 829px) {
+  @media (min-width: $breakpoint) {
+    @content;
+  }
+}
+
+html {
+  font: 400 1.207vw / 1 -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+    "Hiragino Sans", "Hiragino Kaku Gothic ProN", "メイリオ", Osaka,
+    "MS PGothic", sans-serif;
+  background-color: #8ebd64;
+  font-size: 0.120773vw;
+  @include pc {
+    font-size: 0.1vw !important;
+  }
+  @include pc(1001px) {
+    font-size: 1px !important;
+  }
+}
+a,
+[class*="bt"],
+[id*="bt"] {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  cursor: pointer;
+}
+img,
+picture {
+  display: block;
+  width: 100%;
+  backface-visibility: hidden;
+}
+br {
+  @include pc {
+    &.sp {
+      display: none;
+    }
+  }
+}
+body {
+  overflow: hidden;
+  @include pc {
+    margin: 0 auto;
+    max-width: 1920px;
+  }
+  #gimmickBtn {
+    position: fixed;
+    bottom: 40rem;
+    right: 50rem;
+    width: 130rem;
+    height: 50rem;
+    border-radius: 10rem;
+    font-size: 14rem;
+    line-height: 1;
+    text-align: center;
+    color: #fff;
+    background-color: #333;
+    cursor: pointer;
+  }
+}
