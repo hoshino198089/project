@@ -1,0 +1,58 @@
+@mixin pc($breakpoint: 829px) {
+  @media (min-width: $breakpoint) {
+    @content;
+  }
+}
+
+html {
+  font: 400 1.207vw / 1 -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+    "Hiragino Sans", "Hiragino Kaku Gothic ProN", "メイリオ", Osaka,
+    "MS PGothic", sans-serif;
+  background-color: #8ebd64;
+  font-size: 0.120773vw;
+  @include pc {
+    font-size: 0.1vw !important;
+  }
+  @include pc(1001px) {
+    font-size: 1px !important;
+  }
+}
+a,
+[class*="bt"],
+[id*="bt"] {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  cursor: pointer;
+}
+img,
+picture {
+  display: block;
+  width: 100%;
+  backface-visibility: hidden;
+}
+br {
+  @include pc {
+    &.sp {
+      display: none;
+    }
+  }
+}
+body {
+  position: relative;
+  overflow: hidden;
+  @include pc {
+    margin: 0 auto;
+    max-width: 1920px;
+  }
+  .message {
+    position: absolute;
+    bottom: 10vh;
+    right: 0;
+    transform: translateX(100%);
+    padding: 20rem 40rem;
+    font-size: 16rem;
+    line-height: 1.5;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.75);
+    opacity: 0;
+  }
+}
