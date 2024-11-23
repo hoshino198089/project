@@ -23,7 +23,7 @@ class WebGLApp {
     this.resize = this.resize.bind(this);
     this.render = this.render.bind(this);
 
-    this.uPointSize = 0.33;
+    this.uPointSize = 0.4;
     this.uMouse = [0.0, 0.0];
     this.uTime = 0
     this.uAspect = (window.innerWidth / window.innerHeight) / 1.84
@@ -31,6 +31,8 @@ class WebGLApp {
     this.uUmbrellaScale = 1
     this.uSharpness = 3
     this.uRepelsPixelSize = 2
+    this.progressTime = 0
+    this.lastFrameTime = performance.now()
 
     const pane = new Pane();
     pane.addBlade({
@@ -181,8 +183,12 @@ class WebGLApp {
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
+    const currentTime = performance.now()
+    const deltaTime = (currentTime - this.lastFrameTime) / 1000
+    this.progressTime += deltaTime
+    this.lastFrameTime = currentTime
     this.count++
-    this.uTime = this.count / 100
+    this.uTime = this.progressTime * 0.5
 
     this.shaderProgram.use();
     this.shaderProgram.setAttribute(this.vbo);
