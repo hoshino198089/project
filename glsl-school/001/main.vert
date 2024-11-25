@@ -22,7 +22,7 @@ void main() {
   float setRange = 0.03 * umbrellaScale / (abs(distX) + 0.05);
 
   float newY = position.y + 1.0 + fract(time + progress) * -2.0 * speed;
-  float newX = position.x + sign(distX) * setRange * (1.0 - pow(1.0 - max(0.0, min(1.0, -newY + mouse.y + 0.5 + sin(time * 10.) * 0.05)), sharpness));
+  float newX = position.x + sign(distX) * setRange * (1.0 - pow(1.0 - max(0.0, min(1.0, -newY + mouse.y + 0.5 + sin(time * 10.) * 0.02)), sharpness));
   float newPointSize = size * pointScale;
   
   float useX = 0.2 * umbrellaScale < abs(distX) || newPointSize < repelsPixelSize * pointScale ? position.x : newX;
