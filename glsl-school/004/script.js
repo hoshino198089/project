@@ -42,8 +42,8 @@ class WebGLApp {
     }).on('change', (v) => { this.timeScale = v.value; });
   }
   async load() {
-    const mainVs = await WebGLUtility.loadFile('./post2.vert');
-    const mainFs = await WebGLUtility.loadFile('./post2.frag');
+    const mainVs = await WebGLUtility.loadFile('./main.vert');
+    const mainFs = await WebGLUtility.loadFile('./main.frag');
     this.mainShaderProgram = new ShaderProgram(this.gl, {
       vertexShaderSource: mainVs,
       fragmentShaderSource: mainFs,
@@ -60,12 +60,14 @@ class WebGLApp {
         'textureUnit',
         'texSize',
         'texPos',
+        'time',
       ],
       type: [
         'uniform2fv',
         'uniform1i',
         'uniform2fv',
         'uniform2fv',
+        'uniform1f',
       ],
     });
 
@@ -123,7 +125,7 @@ class WebGLApp {
       ],
     });
 
-    const source = './player.png';
+    const source = './rect.png';
     this.texture = await WebGLUtility.createTextureFromFile(this.gl, source);
   }
   setup() {
@@ -195,6 +197,7 @@ class WebGLApp {
         this.uTexPos[1] - this.u8[1] / 255,
       ]
       this.dirVec = this.normalize(n)
+      this.dirVec[0] = Math.min(1, Math.max(-1, this.dirVec[0] * 100))
     }
 
     this.stats.end();
@@ -215,6 +218,7 @@ class WebGLApp {
       0,
       [1 / (this.texSize / this.canvas.width), 1 / (this.texSize / this.canvas.height)],
       this.uTexPos,
+      this.uTime,
     ]);
     gl.drawElements(gl.TRIANGLES, this.planeIndex.length, gl.UNSIGNED_SHORT, 0);
   }
@@ -301,7 +305,6 @@ class WebGLApp {
       [0, 0]
     ]);
     gl.drawElements(gl.TRIANGLES, this.planeIndex.length, gl.UNSIGNED_SHORT, 0);
-
   }
   resize() {
     this.canvas.width = window.innerWidth;

@@ -34,8 +34,8 @@ void main() {
       c += check;
     }
   }
+  
   samplerColor /= c;
   samplerColor.rgb *= inBounds;
-
   gl_FragColor = vec4(samplerColor.rgb, c * 0.05);
 }
