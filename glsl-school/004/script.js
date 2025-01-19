@@ -25,14 +25,13 @@ class WebGLApp {
     this.uTexPos = [0.5, 0.5]
     this.texSize = 256
     this.dirVec = [1, 0]
-
     this.u8 = new Uint8Array(4)
 
-    this.stats = new Stats();
-    this.stats.showPanel(0);
+    this.stats = new Stats()
+    this.stats.showPanel(0)
     document.body.appendChild(this.stats.dom)
 
-    const pane = new Pane();
+    const pane = new Pane()
     pane.addBlade({
       view: 'slider',
       label: 'time-scale',
@@ -113,7 +112,6 @@ class WebGLApp {
         'texPos',
         'range',
         'stage',
-        'pos'
       ],
       type: [
         'uniform1i',
@@ -121,7 +119,6 @@ class WebGLApp {
         'uniform2fv',
         'uniform2fv',
         'uniform1f',
-        'uniform2fv',
       ],
     });
 
@@ -145,7 +142,7 @@ class WebGLApp {
     ];
     this.compressBuffers = compressSize.map(size => WebGLUtility.createFramebuffer(this.gl, size[0], size[1]));
 
-    gl.clearColor(0.9, 0.6, 0.9, 1.0);
+    gl.clearColor(0., 0., 0., 1.0);
     gl.clearDepth(1.0);
     gl.enable(gl.DEPTH_TEST);
   }
@@ -176,14 +173,15 @@ class WebGLApp {
     this.stats.begin();
     requestAnimationFrame(this.render);
 
+    const qtn = WebGLMath.Qtn;
+
     const now = Date.now();
     const time = (now - this.previousTime) / 1000;
     this.uTime += time * this.timeScale;
     this.previousTime = now;
 
     this.uTexPos[0] += this.dirVec[0] * time * this.timeScale * 0.5
-    this.uTexPos[1] += -this.dirVec[1] * time * this.timeScale * 0.3
-    this.uTexPos[1] = 0.5
+    this.uTexPos[1] += -this.dirVec[1] * time * this.timeScale * 0.5
 
     this.renderMain();
     this.renderPostProcess();
@@ -196,8 +194,16 @@ class WebGLApp {
         this.uTexPos[0] - this.u8[0] / 255,
         this.uTexPos[1] - this.u8[1] / 255,
       ]
-      this.dirVec = this.normalize(n)
-      this.dirVec[0] = Math.min(1, Math.max(-1, this.dirVec[0] * 100))
+
+      if (90 < this.dVec2Rot(this.dirVec, n)) {
+        const axis = this.normalize([-n[1], n[0]])
+        const qRot = qtn.rotate(Math.PI, axis.concat([0]));
+        const newVec = qtn.toVecIII(this.dirVec.concat([0]), qRot)
+        this.dirVec = this.normalize([newVec[0], newVec[1]])
+      } else {
+        const addVec = [this.dirVec[0] + n[0] * 1, this.dirVec[1] + n[1] * 1]
+        this.dirVec = this.normalize(addVec)
+      }
     }
 
     this.stats.end();
@@ -206,9 +212,12 @@ class WebGLApp {
     const gl = this.gl;
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffers.framebuffer);
+    gl.clearColor(0., 0., 0., 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 
     this.mainShaderProgram.use();
@@ -226,9 +235,10 @@ class WebGLApp {
     const gl = this.gl;
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.clearColor(0., 0., 0., 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.buffers.texture);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     this.postShaderProgram.use();
     this.postShaderProgram.setAttribute(this.planeVbo, this.planeIbo);
@@ -242,9 +252,12 @@ class WebGLApp {
     const gl = this.gl;
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.compressBuffers[0].framebuffer);
+    gl.clearColor(0., 0., 0., 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.buffers.texture);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     this.gl.viewport(0, 0, 256, 256);
     this.compressShaderProgram.use();
     this.compressShaderProgram.setAttribute(this.planeVbo, this.planeIbo);
@@ -253,58 +266,64 @@ class WebGLApp {
       [256 / this.canvas.width, 256 / this.canvas.height],
       [
         this.uTexPos[0] - (this.texSize / 2 / this.canvas.width),
-        this.uTexPos[1] - (this.texSize / 2 / this.canvas.height)
+        (1 - this.uTexPos[1]) - (this.texSize / 2 / this.canvas.height)
       ],
       [0, 16],
-      0,
-      [this.uTexPos[0] * window.innerWidth, this.uTexPos[1] * window.innerHeight]
+      0
     ]);
     gl.drawElements(gl.TRIANGLES, this.planeIndex.length, gl.UNSIGNED_SHORT, 0);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.compressBuffers[1].framebuffer);//256 * 256
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.compressBuffers[1].framebuffer);
+    gl.clearColor(0., 0., 0., 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.compressBuffers[0].texture);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.viewport(0.0, 0.0, 256, 16);
     this.compressShaderProgram.setUniform([
       0,
       [256 / 256, 16 / 256],
       [0, 0],
       [0, 1],
-      1,
-      [0, 0]
+      1
     ]);
     gl.drawElements(gl.TRIANGLES, this.planeIndex.length, gl.UNSIGNED_SHORT, 0);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.compressBuffers[2].framebuffer);//256 * 16
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.compressBuffers[2].framebuffer);
+    gl.clearColor(0., 0., 0., 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.compressBuffers[1].texture);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.viewport(0.0, 0.0, 16, 1);
     this.compressShaderProgram.setUniform([
       0,
       [16 / 256, 1 / 256],
       [0, 0],
       [16, 0],
-      1,
-      [0, 0]
+      1
     ]);
     gl.drawElements(gl.TRIANGLES, this.planeIndex.length, gl.UNSIGNED_SHORT, 0);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.compressBuffers[3].framebuffer);
+    gl.clearColor(0., 0., 0., 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.compressBuffers[2].texture);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.viewport(0.0, 0.0, 1, 1);
     this.compressShaderProgram.setUniform([
       0,
       [16 / 256, 1 / 256],
       [0, 0],
       [1, 0],
-      1,
-      [0, 0]
+      1
     ]);
     gl.drawElements(gl.TRIANGLES, this.planeIndex.length, gl.UNSIGNED_SHORT, 0);
+
   }
   resize() {
     this.canvas.width = window.innerWidth;
@@ -317,6 +336,8 @@ class WebGLApp {
       gl.bindRenderbuffer(gl.RENDERBUFFER, this.buffers.renderbuffer);
       gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
       gl.bindTexture(gl.TEXTURE_2D, this.buffers.texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     }
   }
@@ -341,5 +362,20 @@ class WebGLApp {
     const length = Math.sqrt(vec2[0] * vec2[0] + vec2[1] * vec2[1])
     if (length === 0) { return [0, 0] }
     return [vec2[0] / length, vec2[1] / length]
+  }
+  dVec2Rot(a, b) {
+    const dot = a[0] * b[0] + a[1] * b[1]
+    const lengthA = Math.sqrt(a[0] * a[0] + a[1] * a[1])
+    const lengthB = Math.sqrt(b[0] * b[0] + b[1] * b[1])
+    let cos = dot / (lengthA * lengthB)
+    cos = Math.min(1, Math.max(-1, cos))
+    return Math.acos(cos) * (180 / Math.PI)
+  }
+  invVec(vec2, axis) {
+    const [vx, vy] = vec2
+    const [ax, ay] = axis
+    const rotatedX = vx - 2 * (vx * ax + vy * ay) * ax
+    const rotatedY = vy - 2 * (vx * ax + vy * ay) * ay
+    return [rotatedX, rotatedY]
   }
 }

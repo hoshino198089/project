@@ -4,7 +4,6 @@ uniform vec2 texSize;
 uniform vec2 texPos;
 uniform vec2 range;
 uniform float stage;
-uniform vec2 pos;
 varying vec2 vTexCoord;
 
 void main() {
@@ -34,8 +33,8 @@ void main() {
       c += check;
     }
   }
-  
   samplerColor /= c;
   samplerColor.rgb *= inBounds;
+
   gl_FragColor = vec4(samplerColor.rgb, c * 0.05);
 }
